@@ -1,0 +1,1 @@
+Your User name is <strong>{{user}}</strong>

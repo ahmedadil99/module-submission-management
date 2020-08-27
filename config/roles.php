@@ -113,7 +113,7 @@ return [
     */
 
     // Enable Optional Roles Gui
-    'rolesGuiEnabled'               => env('ROLES_GUI_ENABLED', false),
+    'rolesGuiEnabled'               => env('ROLES_GUI_ENABLED', true),
 
     // Enable `auth` middleware
     'rolesGuiAuthEnabled'           => env('ROLES_GUI_AUTH_ENABLED', true),
@@ -219,5 +219,5 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'laravelUsersEnabled'           => env('ROLES_GUI_LARAVEL_ROLES_ENABLED', false),
+    'laravelUsersEnabled'           => env('ROLES_GUI_LARAVEL_ROLES_ENABLED', true),
 ];

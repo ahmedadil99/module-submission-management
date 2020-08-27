@@ -17,6 +17,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::prefix('admin/blog')->namespace('Article')->middleware('role:admin')->group(function () {
+    Route::get('create', function () {
+        return 'now creating blog';
+        });
+});
+
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');

@@ -6,7 +6,6 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">{{ __('Register') }}</div>
-
                 <div class="card-body">
                     <form method="POST" action="{{ route('register') }}">
                         @csrf
@@ -58,6 +57,29 @@
 
                             <div class="col-md-6">
                                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-md-4 col-form-label text-md-right"></div>
+                            <div class="col-md-6">
+                            <div class="form-check form-check-inline @error('role') is-invalid @enderror">
+                                    <input class="form-check-input" type="radio" name="role" id="inlineRadio1" value="writer" checked>
+                                    <label class="form-check-label" for="inlineRadio1">Writer</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="role" id="inlineRadio2" value="agent">
+                                    <label class="form-check-label" for="inlineRadio2">Agent</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="role" id="inlineRadio2" value="publisher">
+                                    <label class="form-check-label" for="inlineRadio2">Publisher</label>
+                                </div>
+                                @error('role')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
                             </div>
                         </div>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use App\User;
+use App\Profile;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -75,6 +76,17 @@ class RegisterController extends Controller
 
         $role = config('roles.models.role')::where('slug', '=', $data['role'])->first();  //choose the default role upon user creation.
         $user->attachRole($role);
+        /*$profile = new Profile();
+        //$profile->user_id = $user->id;
+        $profile->user()->associate($user);
+        $profile->first_name = 'adsfasdf';
+        $profile->last_name = 'asdfaf';
+        $profile->linkedin = 'www.asdfadsfa.com';
+        $profile->gender = 'male';
+        var_dump($profile);
+        $profile->save();
+        //$user->profile()->create($profile);
+        */
 
         return $user;
     }

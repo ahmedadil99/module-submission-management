@@ -23,6 +23,22 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+        $user = auth()->user();
+
+        if(is_null($user->profile)) {
+            return redirect()->route('profile.create');
+        }
+
+        if ($user->hasRole('writer')) { 
+            return view('dashboards.writer');
+        }
+        if ($user->hasRole('publisher')) { 
+            return view('dashboards.publisher');
+        }
+        if ($user->hasRole('agent')) { 
+            return view('dashboards.agent');
+        }
+        
+        
     }
 }

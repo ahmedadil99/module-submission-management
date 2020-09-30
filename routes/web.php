@@ -14,19 +14,17 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('admin');
 });
+//Route::get('/agents','AgentController@index')->name('index');
 
-Route::prefix('admin/blog')->namespace('Article')->middleware('role:admin')->group(function () {
-    Route::get('create', function () {
-        return 'now creating blog';
-        });
+
+
+Route::group(['prefix' => 'admin'], function () {
+    Voyager::routes();
+    Route::get('/agents/assign-article/{id}','App\Http\Controllers\AgentSController@assignArticle');
+    Route::resource('/agents', 'App\Http\Controllers\AgentsController');
+
+    
+    
 });
-
-Auth::routes();
-
-Route::get('/home', 'HomeController@index')->name('home');
-
-Auth::routes();
-
-Route::resource('profile','ProfileController');

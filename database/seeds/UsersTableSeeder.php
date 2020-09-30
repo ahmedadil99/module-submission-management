@@ -1,46 +1,29 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
+use TCG\Voyager\Models\Role;
+use TCG\Voyager\Models\User;
 
 class UsersTableSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Auto generated seed file.
      *
      * @return void
      */
     public function run()
     {
-        $userRole = config('roles.models.role')::where('name', '=', 'User')->first();
-        $adminRole = config('roles.models.role')::where('name', '=', 'Admin')->first();
-        $permissions = config('roles.models.permission')::all();
+        if (User::count() == 0) {
+            $role = Role::where('name', 'admin')->firstOrFail();
 
-        /*
-         * Add Users
-         *
-         */
-        if (config('roles.models.defaultUser')::where('email', '=', 'admin@admin.com')->first() === null) {
-            $newUser = config('roles.models.defaultUser')::create([
-                'name'     => 'Admin',
-                'email'    => 'admin@admin.com',
-                'password' => bcrypt('password'),
+            User::create([
+                'name'           => 'Admin',
+                'email'          => 'admin@admin.com',
+                'password'       => bcrypt('password'),
+                'remember_token' => Str::random(60),
+                'role_id'        => $role->id,
             ]);
-
-            $newUser->attachRole($adminRole);
-            foreach ($permissions as $permission) {
-                $newUser->attachPermission($permission);
-            }
-        }
-
-        if (config('roles.models.defaultUser')::where('email', '=', 'user@user.com')->first() === null) {
-            $newUser = config('roles.models.defaultUser')::create([
-                'name'     => 'User',
-                'email'    => 'user@user.com',
-                'password' => bcrypt('password'),
-            ]);
-
-            $newUser;
-            $newUser->attachRole($userRole);
         }
     }
 }

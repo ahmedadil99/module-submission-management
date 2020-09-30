@@ -1,34 +1,36 @@
 version: '3.5'
 
 services:
-  laravel-app:
+  module-management-app:
     build:
       context: '.'
       args:
         uid: ${UID}
-    container_name: laravel-app
+    container_name: module-management-app
     environment:
       - APACHE_RUN_USER=#${UID}
       - APACHE_RUN_GROUP=#${UID}
     volumes:
       - .:/var/www/html
     ports:
-      - 8086:80
+      - 8091:80
     networks:
       backend:
         aliases:
-          - laravel-app
+          - module-management-app
 
-  mysql-db:
+  module-management-db:
     image: mysql:5.7
-    container_name: mysql-db
+    container_name: module-management-db
     ports:
-      - 33066:3306
+      - 33067:3306
     volumes:
-      - ./mysql-db:/var/lib/mysql
+      - ./run/var:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=securerootpassword
       - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
     networks:
       backend:
         aliases:

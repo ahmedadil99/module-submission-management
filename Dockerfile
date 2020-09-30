@@ -1,10 +1,11 @@
-FROM php:7.2-apache
+FROM php:7.3-apache
 
 RUN apt-get update
 
 # 1. development packages
 RUN apt-get install -y \
     git \
+    libzip-dev \
     zip \
     curl \
     sudo \
@@ -16,15 +17,17 @@ RUN apt-get install -y \
     libmcrypt-dev \
     libreadline-dev \
     libfreetype6-dev \
-    g++
+    g++ \
+    libwebp-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev libxpm-dev \
+    libfreetype6-dev
 
 # 2. apache configs + document root
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - 
-RUN apt-get install -y nodejs npm
 # 3. mod_rewrite for URL rewrite and mod_headers for .htaccess extra headers like Access-Control-Allow-Origin-
 RUN a2enmod rewrite headers
 
@@ -40,7 +43,19 @@ RUN docker-php-ext-install \
     calendar \
     mbstring \
     pdo_mysql \
-    zip
+    zip \
+    exif
+
+RUN docker-php-ext-configure gd \
+    --with-gd \
+    --with-webp-dir \
+    --with-jpeg-dir \
+    --with-png-dir \
+    --with-zlib-dir \
+    --with-xpm-dir \
+    --with-freetype-dir
+
+RUN docker-php-ext-install gd
 
 # 5. composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

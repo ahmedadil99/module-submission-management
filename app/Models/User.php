@@ -37,6 +37,11 @@ class User extends \TCG\Voyager\Models\User
         return $this->belongsToMany('TCG\Voyager\Models\Role', 'user_roles', 'user_id', 'role_id');
     }
 
+    public function role()
+    {
+        return $this->belongsTo('TCG\Voyager\Models\Role');
+    }
+
     /**
      * The attributes that should be cast to native types.
      *

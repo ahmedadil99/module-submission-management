@@ -13,4 +13,9 @@ class ArticleToAgent extends Model
 
     protected $fillable = ['agent_id', 'article_id'];
 
+    public function article()
+    {
+        return $this->belongsTo('App\Models\Article');
+    }
+
 }

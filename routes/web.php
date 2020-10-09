@@ -22,8 +22,12 @@ Route::get('/', function () {
 
 Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();
-    Route::get('/agents/assign-article/{id}','App\Http\Controllers\AgentSController@assignArticle');
-    Route::resource('/agents', 'App\Http\Controllers\AgentsController');
+    Route::get('/agents/{id}','App\Http\Controllers\AgentsController@view');
+    Route::get('/agents/assign-atircle/{agent_id}/{article_id}','App\Http\Controllers\AgentSController@assignArticle');
+    Route::get('/agents/view-article/{article_id}','App\Http\Controllers\AgentSController@viewTransferedArticle');
+    Route::post('/agents/update-offer/{id}','App\Http\Controllers\AgentSController@updateOffer');
+    Route::post('/agents/send-message/{id}','App\Http\Controllers\AgentSController@sendMessage');
+    Route::get('/agents','App\Http\Controllers\AgentsController@index');
 
     
     

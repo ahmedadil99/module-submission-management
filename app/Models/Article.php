@@ -14,6 +14,11 @@ class Article extends Model
     public function categories(){
         return $this->belongsToMany('App\Models\Category');
     }
+    
+    public function agents(){
+        return $this->hasMany('App\Model\ArticleToAgent');
+    }
+    
 
     protected static function boot(){
         parent::boot();
@@ -21,8 +26,6 @@ class Article extends Model
             static::addGlobalScope('author', function (Builder $builder) {
                 $builder->where('user_id', '=', Auth::user()->id);
             });
-        }
-
-        
+        }        
     }
 }

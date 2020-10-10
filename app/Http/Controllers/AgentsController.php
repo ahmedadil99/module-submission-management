@@ -8,6 +8,7 @@ use App\Models\Article;
 use App\Models\ArticleToAgent;
 use App\Models\WriterAgentMessages;
 use Illuminate\Support\Facades\Auth;
+use Stripe;
 
 
 class AgentsController extends Controller
@@ -49,7 +50,6 @@ class AgentsController extends Controller
     public function sendMessage($id, Request $request)
     {
         $articlesAssigned = ArticleToAgent::with('article')->where('id', $id)->firstOrFail();
-        //dd($articlesAssigned);
         $user = Auth::user();
         if($user->role()->get()->first()->name == 'Writer'){
             WriterAgentMessages::create([
@@ -57,8 +57,79 @@ class AgentsController extends Controller
                 'writer_id' => $user->id,
                 'article_id' => $articlesAssigned->article_id
             ]);
+
+            // send email
             return redirect('/admin/agents/view-article/'.$articlesAssigned->article_id);
         }
+
+        if($user->role()->get()->first()->name == 'Agent'){
+            WriterAgentMessages::create([
+                'message' => $request->input('message'), 
+                'agent_id' => $user->id,
+                'article_id' => $articlesAssigned->article_id
+            ]);
+            return redirect('/admin/agent/view-article/'.$articlesAssigned->id);
+        }
+    }
+
+    public function writerCharge($id, Request $request){
+        $article = ArticleToAgent::with('article')->where('id', $id)->get()->first();
+        $amount = 0;
+        if($article->counter_offer == null){
+            $amount = $article->amount_offered;
+        }
+        else{
+            $amount = $article->counter_offer;
+        }
+
+        Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        Stripe\Charge::create ([
+                "amount" => $amount * 100,
+                "currency" => "usd",
+                "source" => $request->stripeToken,
+                "description" => "Test payment from itsolutionstuff.com." 
+        ]);
+        $article->amount_paid = $amount;
+        $article->status = "payment_made";
+        $article->save();
+
+        return redirect('/admin/agents/view-article/'.$article->article->id);
+    }
+
+    public function agentsArticles(){
+        $myAricles = ArticleToAgent::with('article')->where('agent_id', Auth::user()->id)->get();
+        return view('/vendor/voyager/agents/my-articles', compact('myAricles'));
+    }
+
+    public function agentArticle($id){
+        $article = ArticleToAgent::with('article')->where('id', $id)->get()->first();
+        $messages = WriterAgentMessages::where('article_id', $article->article->id)->orderBy('created_at', 'DESC')->get();
+        $role = Auth::user()->role()->get()->first()->name;
+        return view('/vendor/voyager/agents/agent-article', compact('article', 'messages', 'role'));
+    }
+
+    public function agentProcessOffer($id, Request $request){
+        $article = ArticleToAgent::with('article')->where('id', $id)->get()->first();
+        if($request->input('offer') == 'accepted'){
+            $article->status = 'offer_accepted';  
+        }
+        if($request->input('offer') == 'rejected'){
+            $article->status = 'offer_rejected';  
+        }
+        if($request->input('offer') == 'counter'){
+            $article->status = 'counter_offer';  
+        }
+        if($request->input('offer') == 'reconsider_offer'){
+            $article->status = 'offer_made';  
+        }
+        
+        if($request->input('offer') == 'counter_amount'){
+            $article->status = 'counter_amount_offered'; 
+            $article->counter_offer = $request->input('counter_amount_offered');
+        }
+        $article->save();
+        return redirect('/admin/agent/view-article/'.$article->id);
     }
 
     public function assignArticle($agent_id, $article_id)

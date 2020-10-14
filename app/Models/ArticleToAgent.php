@@ -11,11 +11,17 @@ class ArticleToAgent extends Model
 
     protected $table = 'article_to_agent';
 
-    protected $fillable = ['agent_id', 'article_id'];
+    protected $fillable = ['agent_id', 'article_id', 'writer_id'];
 
     public function article()
     {
         return $this->belongsTo('App\Models\Article');
+    }
+
+    public function messages()
+    {
+        return $this->hasMany('App\Models\ArticleNegotiation')
+            ->orderBy('created_at', 'DESC');
     }
 
 }

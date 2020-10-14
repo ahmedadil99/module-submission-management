@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Article;
 use App\Models\ArticleToAgent;
 use App\Models\WriterAgentMessages;
+use App\Models\ArticleNegotiation;
 use Illuminate\Support\Facades\Auth;
 use Stripe;
 
@@ -29,21 +30,53 @@ class AgentsController extends Controller
                                   ->whereNotIn('id', $ids);
         return view('/vendor/voyager/agents/view', compact('agent', 'articles', 'articlesAssigned'));
     }
+    public function viewWriters($id)
+    {
+        $writer = User::all()->where('id', $id)->first();
+        $articlesAssigned = ArticleToAgent::with('article')->where('writer_id', $id)->get();
+        $ids = $articlesAssigned->pluck('article.parent_id');
+        $user = Auth::user();
+        $role = Auth::user()->role()->get()->first()->name;
+        $articles = Article::all()->where('user_id', $writer->id)
+                                  ->where('parent_id', null)
+                                  ->whereNotIn('id', $ids);
+        return view('/vendor/voyager/agents/view-writer', compact('writer', 'articles', 'articlesAssigned', 'user'));
+    }
+    
 
     public function viewTransferedArticle($id)
     {
         $articlesAssigned = ArticleToAgent::with('article')->where('article_id', $id)->firstOrFail();
+        $lastMessage = $articlesAssigned->messages()->get()->first();
         $messages = WriterAgentMessages::where('article_id', $id)->orderBy('created_at', 'DESC')->get();
         $role = Auth::user()->role()->get()->first()->name;
-        return view('/vendor/voyager/agents/view-transfered-agent',compact('articlesAssigned', 'messages', 'role'));
+        return view('/vendor/voyager/agents/view-transfered-agent',
+                    compact('articlesAssigned', 'messages', 'role', 'lastMessage'
+        ));
     }
 
     public function updateOffer($id, Request $request)
     {
         $articlesAssigned = ArticleToAgent::with('article')->where('id', $id)->firstOrFail();
-        $articlesAssigned->amount_offered = $request->input('amount_offered');
-        $articlesAssigned->status = 'offer_made';
-        $articlesAssigned->save();
+        $user = Auth::user();
+        $role = $user->role()->get()->first()->name;
+        $lastMessage = null;
+        $amount = $request->input('amount_offered');
+        $lastMessage = $articlesAssigned->messages()->orderBy('created_at', 'DESC')->get()->first();
+        $amount = $request->input('amount_offered') == null ? $lastMessage->amount : $request->input('amount_offered');
+
+        if($role == 'Writer'){            
+            ArticleNegotiation::create([
+                'message' => $request->input('message'), 
+                'article_to_agent_id' => $articlesAssigned->id,
+                'writer_id' => $user->id,
+                'amount' => $amount,
+                'status' => $request->input('status')
+            ]);
+        }
+        else{
+
+        }
         return redirect('/admin/agents/view-article/'.$articlesAssigned->article_id);
     }
 
@@ -72,27 +105,37 @@ class AgentsController extends Controller
         }
     }
 
+    public function agentWriterList(){
+       $writers = User::all();
+       return view('/vendor/voyager/agents/writers-index', compact('writers'));
+    }
+
     public function writerCharge($id, Request $request){
         $article = ArticleToAgent::with('article')->where('id', $id)->get()->first();
+        $user = Auth::user();
         $amount = 0;
-        if($article->counter_offer == null){
-            $amount = $article->amount_offered;
-        }
-        else{
-            $amount = $article->counter_offer;
-        }
+        $lastMessage = $article->messages()->where('status','=', 'offer_accepted')
+                                           ->orderBy('created_at', 'DESC')
+                                           ->get()->first();
+        $amount = intval($lastMessage->amount);
+
+        
 
         Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
-
         Stripe\Charge::create ([
-                "amount" => $amount * 100,
+                "amount" =>  $amount * 100,
                 "currency" => "usd",
                 "source" => $request->stripeToken,
                 "description" => "Test payment from itsolutionstuff.com." 
         ]);
-        $article->amount_paid = $amount;
-        $article->status = "payment_made";
-        $article->save();
+
+        ArticleNegotiation::create([
+            'message' => 'payment has been made', 
+            'article_to_agent_id' => $article->id,
+            'writer_id' => $user->id,
+            'amount' => $amount,
+            'status' => 'article_transfered'
+        ]);
 
         return redirect('/admin/agents/view-article/'.$article->article->id);
     }
@@ -104,31 +147,27 @@ class AgentsController extends Controller
 
     public function agentArticle($id){
         $article = ArticleToAgent::with('article')->where('id', $id)->get()->first();
+        $lastMessage = $article->messages()->get()->first();
         $messages = WriterAgentMessages::where('article_id', $article->article->id)->orderBy('created_at', 'DESC')->get();
         $role = Auth::user()->role()->get()->first()->name;
-        return view('/vendor/voyager/agents/agent-article', compact('article', 'messages', 'role'));
+        return view('/vendor/voyager/agents/agent-article', compact('article', 'messages', 'role', 'lastMessage'));
     }
 
     public function agentProcessOffer($id, Request $request){
         $article = ArticleToAgent::with('article')->where('id', $id)->get()->first();
-        if($request->input('offer') == 'accepted'){
-            $article->status = 'offer_accepted';  
-        }
-        if($request->input('offer') == 'rejected'){
-            $article->status = 'offer_rejected';  
-        }
-        if($request->input('offer') == 'counter'){
-            $article->status = 'counter_offer';  
-        }
-        if($request->input('offer') == 'reconsider_offer'){
-            $article->status = 'offer_made';  
-        }
-        
-        if($request->input('offer') == 'counter_amount'){
-            $article->status = 'counter_amount_offered'; 
-            $article->counter_offer = $request->input('counter_amount_offered');
-        }
-        $article->save();
+        $user = Auth::user();
+        $role = $user->role()->get()->first()->name;
+        $lastMessage = null;
+        $amount = $request->input('amount_offered');
+        $lastMessage = $article->messages()->orderBy('created_at', 'DESC')->get()->first();
+        $amount = $request->input('amount_offered') == null ? $lastMessage->amount : $request->input('amount_offered');
+        ArticleNegotiation::create([
+             'message' => $request->input('message'), 
+             'article_to_agent_id' => $article->id,
+             'agent_id' => $user->id,
+             'amount' => $amount,
+             'status' => $request->input('status')
+        ]);
         return redirect('/admin/agent/view-article/'.$article->id);
     }
 
@@ -137,7 +176,14 @@ class AgentsController extends Controller
         $new_article = $original_article->replicate();
         $new_article->parent_id = $original_article->id;
         $new_article->save();
-        $agt = ArticleToAgent::create(['article_id' => $new_article->id,'agent_id' => $agent_id]);
-        return redirect('/admin/agents/'.$agent_id);
+        $role = Auth::user()->role()->get()->first()->name;
+        $agt = ArticleToAgent::create(['article_id' => $new_article->id, 'writer_id' => $original_article->user_id, 'agent_id' => $agent_id]);
+        if($role == 'Writer'){
+            return redirect('/admin/agents/'.$agent_id);
+        }
+        else{
+            return redirect('/admin/agent/view-article/'.$agt->id);
+        }
+       
     }
 }

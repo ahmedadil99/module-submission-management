@@ -102,16 +102,15 @@
           @foreach($messages as $message)
             <div class="row">
               <div class="col-md-12">
-                @if($role == 'Writer' && $message->writer_id != null)
+                @if($role == 'Writer' && $message->sender_id == Auth::user()->id)
                 <div class="alert alert-info" role="alert">
-                    <b>You: </b>{{$message->message}}
+                    <b>You: </b>&nbsp;&nbsp; {{$message->message}}
                     <hr>
                     <small>{{date_format($message->created_at, 'd/m/Y h:i A')}}</small>
                 </div>
-                @endif
-                @if($role == 'Writer' && $message->writer_id == null)
+                @else
                 <div class="alert alert-success text-right" role="alert">
-                    <b>Agent: </b>{{$message->message}}
+                    <b>Agent: </b> &nbsp;&nbsp;{{$message->message}}
                     <hr>
                     <small>{{date_format($message->created_at, 'd/m/Y h:i A')}}</small>
                 </div>

@@ -42,6 +42,11 @@ class User extends \TCG\Voyager\Models\User
         return $this->belongsTo('TCG\Voyager\Models\Role');
     }
 
+    public function setPasswordAttribute($password)
+    {
+        $this->attributes['password'] = bcrypt($password);
+    }
+
     /**
      * The attributes that should be cast to native types.
      *

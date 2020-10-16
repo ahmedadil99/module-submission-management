@@ -89,14 +89,13 @@
           @foreach($messages as $message)
             <div class="row">
               <div class="col-md-12">
-                @if($role == 'Agent' && $message->agent_id != null)
+                @if($role == 'Agent' && $message->sender_id == Auth::user()->id)
                 <div class="alert alert-info" role="alert">
                     <b>You: </b>{{$message->message}}
                     <hr>
                     <small>{{date_format($message->created_at, 'd/m/Y h:i A')}}</small>
                 </div>
-                @endif
-                @if($role == 'Agent' && $message->writer_id != null)
+                @else
                 <div class="alert alert-success text-right" role="alert">
                     <b>Writer: </b>{{$message->message}}
                     <hr>

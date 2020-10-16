@@ -31,7 +31,39 @@
         </div>
         <div id="adminmenu">
             @if(Auth::user()->role()->get()->first()->name == 'Agent')
-                {{ menu('agent', 'bootstrap') }}
+                <div id="adminmenu">
+                    <ul class="nav navbar-nav">
+                        <li class="active">
+                            <a target="_self" href="/admin/agent/my-articles"><span class="icon voyager-study"></span> <span class="title">My Articles</span></a> <!---->
+                        </li>
+                        <li class="">
+                            <a target="_self" href="/admin/agent/writers-list"><span class="icon voyager-people"></span> <span class="title">Writers List</span></a> <!---->
+                        </li>
+                    </ul>
+                </div>
+            @elseif(Auth::user()->role()->get()->first()->name == 'Writer')
+                <div id="adminmenu">
+                        <ul class="nav navbar-nav">
+                            <li class="">
+                                <a target="_self" href="/admin/articles"><span class="icon voyager-study"></span> <span class="title">My Articles</span></a> <!---->
+                            </li>
+                            <li class="">
+                                <a target="_self" href="/admin/agents"><span class="icon voyager-people"></span> <span class="title">Agents List</span></a> <!---->
+                            </li>
+                            
+                        </ul>
+                </div>
+            @elseif(Auth::user()->role()->get()->first()->name == 'Publisher')
+                <div id="adminmenu">
+                        <ul class="nav navbar-nav">
+                            <li class="">
+                                <a target="_self" href="/admin/publisher-articles"><span class="icon voyager-study"></span> <span class="title">My Articles</span></a> <!---->
+                            </li>
+                            <li class="">
+                                <a target="_self" href="/admin/publisher-agents-list"><span class="icon voyager-people"></span> <span class="title">Agents List</span></a> <!---->
+                            </li>
+                        </ul>
+                </div>
             @else
                 <admin-menu :items="{{ menu('admin', '_json') }}"></admin-menu>
             @endif

@@ -1,28 +1,33 @@
 <?php
 namespace App\Http\Controllers;
-
-use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
+ 
 use Illuminate\Http\Request;
 use App\Models\User;
-use TCG\Voyager\Models\Role;
-
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use TCG\Voyager\Models\Role; 
 
 class RegisterController extends Controller
 {
-  public function register(){
-    return view('/register/create');
+
+  public function create()
+  {
+    return view('register.create');
   }
 
-  public function create(Request $request){
-    $user = User::create(
-      [
-        'email' => $request->input('email'),
-        'name' => $request->input('name'),
-        'password' => bcrypt($request->input('password')),
-        'role_id' => $request->input('role')
+  public function store(){
+    $this->validate(request(), [
+      'name' => 'required',
+      'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+      'password' => ['required', 'string', 'min:8', 'confirmed'],
+      'role' => ['required', Rule::in(['Writer', 'Publisher', 'Agent'])],
     ]);
-
-    return redirect('/admin/login');
+    
+    $role = Role::where('name', request()->input('role'))->first();
+    $user = User::create(request(['name', 'email', 'password']));
+    $user->role_id = $role->id;
+    $user->save();
+    auth()->login($user);        
+    return redirect()->to('/admin/login');
   }
 }
